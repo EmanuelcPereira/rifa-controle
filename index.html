@@ -296,9 +296,15 @@
     </div>
 
     <script>
+        // https://docs.google.com/spreadsheets/d/1iqv2ljbdgnQTHt2VUk7rFZA-DmNfMC89-4MIj5k3fm0/edit?usp=sharing
+
+        // https://sheets.googleapis.com/v4/spreadsheets/1iqv2ljbdgnQTHt2VUk7rFZA-DmNfMC89-4MIj5k3fm0/values/Sheet1!A:C?key=${API_KEY}
+
         // ID da planilha do Google Sheets (extraído da URL)
         const SHEET_ID = '1iqv2ljbdgnQTHt2VUk7rFZA-DmNfMC89-4MIj5k3fm0';
-        const API_KEY = 'AIzaSyBvOkBwJ1X6XqJ8K9L2M3N4O5P6Q7R8S9T0'; // Chave pública para planilhas públicas
+        // IMPORTANTE: Substitua pela sua API key real do Google Cloud Console
+        // Para obter sua API Key: https://console.cloud.google.com/
+        const API_KEY = 'AIzaSyBdGlkCu6EngjJXNLx0_pxVcJpinudsaAQ'; // Cole sua chave aqui (começa com AIza...)
         
         let autoRefreshInterval;
         let isAutoRefreshActive = true;
@@ -317,6 +323,11 @@
             const refreshBtn = document.getElementById('refresh-btn');
 
             try {
+                // Verificar se a API key foi configurada
+                if (API_KEY === 'SUA_API_KEY_AQUI') {
+                    throw new Error('API Key não configurada. Por favor, configure sua chave da API do Google Sheets.');
+                }
+
                 loading.style.display = 'block';
                 content.style.display = 'none';
                 errorContainer.style.display = 'none';
@@ -325,7 +336,15 @@
                 const response = await fetch(getSheetUrl());
                 
                 if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
+                    if (response.status === 400) {
+                        throw new Error('Erro 400: Verifique se a API key está correta e se a planilha está pública');
+                    } else if (response.status === 403) {
+                        throw new Error('Erro 403: API key inválida ou planilha não está pública');
+                    } else if (response.status === 404) {
+                        throw new Error('Erro 404: Planilha não encontrada. Verifique o ID da planilha');
+                    } else {
+                        throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+                    }
                 }
 
                 const data = await response.json();
