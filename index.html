@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Rifa - Números</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .controls {
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b6b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .number-card {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            position: relative;
+            background: white;
+        }
+
+        .number-card.available {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .number-card.occupied {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            position: relative;
+        }
+
+        .number-card.occupied::after {
+            content: '✕';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #dc3545;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .number-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .details-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .details-table th {
+            background: #343a40;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .details-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .details-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .last-update {
+            text-align: center;
+            padding: 10px;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .numbers-grid {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+                gap: 5px;
+            }
+            
+            .number-card {
+                font-size: 1em;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Controle de Rifa</h1>
+            <p>Números disponíveis e ocupados em tempo real</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="total-numbers">0</div>
+                <div class="stat-label">Total de Números</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="available-numbers">0</div>
+                <div class="stat-label">Disponíveis</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="occupied-numbers">0</div>
+                <div class="stat-label">Ocupados</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="refresh-btn" onclick="loadData()">🔄 Atualizar Agora</button>
+            <button class="btn" id="auto-refresh-btn" onclick="toggleAutoRefresh()">⏸️ Pausar Auto-Atualização</button>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Carregando dados da planilha...</p>
+        </div>
+
+        <div id="error-container" style="display: none;"></div>
+
+        <div id="content" style="display: none;">
+            <div class="numbers-grid" id="numbers-grid"></div>
+            
+            <div class="details-panel">
+                <h3 style="margin-bottom: 15px; color: #343a40;">📋 Detalhes dos Números Ocupados</h3>
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                        </tr>
+                    </thead>
+                    <tbody id="details-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="last-update">
+            <p>Última atualização: <span id="last-update">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        // ID da planilha do Google Sheets (extraído da URL)
+        const SHEET_ID = '1iqv2ljbdgnQTHt2VUk7rFZA-DmNfMC89-4MIj5k3fm0';
+        const API_KEY = 'AIzaSyBvOkBwJ1X6XqJ8K9L2M3N4O5P6Q7R8S9T0'; // Chave pública para planilhas públicas
+        
+        let autoRefreshInterval;
+        let isAutoRefreshActive = true;
+        let allData = [];
+
+        // Função para obter a URL da API do Google Sheets
+        function getSheetUrl() {
+            return `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A:C?key=${API_KEY}`;
+        }
+
+        // Função para carregar dados da planilha
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const errorContainer = document.getElementById('error-container');
+            const refreshBtn = document.getElementById('refresh-btn');
+
+            try {
+                loading.style.display = 'block';
+                content.style.display = 'none';
+                errorContainer.style.display = 'none';
+                refreshBtn.disabled = true;
+
+                const response = await fetch(getSheetUrl());
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.values || data.values.length === 0) {
+                    throw new Error('Planilha vazia ou sem dados');
+                }
+
+                allData = data.values.slice(1); // Remove o cabeçalho
+                displayData();
+                updateStats();
+                updateLastUpdateTime();
+
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showError(`Erro ao carregar dados: ${error.message}`);
+            } finally {
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                refreshBtn.disabled = false;
+            }
+        }
+
+        // Função para exibir os dados
+        function displayData() {
+            const numbersGrid = document.getElementById('numbers-grid');
+            const detailsTableBody = document.getElementById('details-table-body');
+            
+            // Limpar conteúdo anterior
+            numbersGrid.innerHTML = '';
+            detailsTableBody.innerHTML = '';
+
+            // Encontrar o maior número para determinar o range
+            let maxNumber = 0;
+            allData.forEach(row => {
+                const num = parseInt(row[0]);
+                if (!isNaN(num) && num > maxNumber) {
+                    maxNumber = num;
+                }
+            });
+
+            // Criar cards para todos os números
+            for (let i = 1; i <= maxNumber; i++) {
+                const numberCard = document.createElement('div');
+                numberCard.className = 'number-card';
+                numberCard.textContent = i;
+                numberCard.id = `number-${i}`;
+                numbersGrid.appendChild(numberCard);
+            }
+
+            // Marcar números ocupados
+            allData.forEach(row => {
+                const numero = parseInt(row[0]);
+                const nome = row[1] || '';
+                const telefone = row[2] || '';
+
+                if (!isNaN(numero) && nome.trim()) {
+                    const numberCard = document.getElementById(`number-${numero}`);
+                    if (numberCard) {
+                        numberCard.classList.add('occupied');
+                        numberCard.classList.remove('available');
+                    }
+
+                    // Adicionar à tabela de detalhes
+                    const row = detailsTableBody.insertRow();
+                    row.insertCell(0).textContent = numero;
+                    row.insertCell(1).textContent = nome;
+                    row.insertCell(2).textContent = telefone;
+                }
+            });
+
+            // Marcar números disponíveis
+            for (let i = 1; i <= maxNumber; i++) {
+                const numberCard = document.getElementById(`number-${i}`);
+                if (numberCard && !numberCard.classList.contains('occupied')) {
+                    numberCard.classList.add('available');
+                }
+            }
+        }
+
+        // Função para atualizar estatísticas
+        function updateStats() {
+            const totalNumbers = document.getElementById('total-numbers');
+            const availableNumbers = document.getElementById('available-numbers');
+            const occupiedNumbers = document.getElementById('occupied-numbers');
+
+            let maxNumber = 0;
+            let occupiedCount = 0;
+
+            allData.forEach(row => {
+                const num = parseInt(row[0]);
+                if (!isNaN(num) && num > maxNumber) {
+                    maxNumber = num;
+                }
+                if (!isNaN(num) && row[1] && row[1].trim()) {
+                    occupiedCount++;
+                }
+            });
+
+            const availableCount = maxNumber - occupiedCount;
+
+            totalNumbers.textContent = maxNumber;
+            availableNumbers.textContent = availableCount;
+            occupiedNumbers.textContent = occupiedCount;
+        }
+
+        // Função para atualizar horário da última atualização
+        function updateLastUpdateTime() {
+            const lastUpdate = document.getElementById('last-update');
+            const now = new Date();
+            lastUpdate.textContent = now.toLocaleString('pt-BR');
+        }
+
+        // Função para exibir erros
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `<div class="error">${message}</div>`;
+            errorContainer.style.display = 'block';
+        }
+
+        // Função para alternar auto-atualização
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('auto-refresh-btn');
+            
+            if (isAutoRefreshActive) {
+                clearInterval(autoRefreshInterval);
+                btn.textContent = '▶️ Iniciar Auto-Atualização';
+                btn.style.background = '#28a745';
+                isAutoRefreshActive = false;
+            } else {
+                startAutoRefresh();
+                btn.textContent = '⏸️ Pausar Auto-Atualização';
+                btn.style.background = '#dc3545';
+                isAutoRefreshActive = true;
+            }
+        }
+
+        // Função para iniciar auto-atualização
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(loadData, 30000); // Atualiza a cada 30 segundos
+        }
+
+        // Inicializar a aplicação
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            startAutoRefresh();
+        });
+
+        // Atualizar automaticamente quando a página ganha foco
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && isAutoRefreshActive) {
+                loadData();
+            }
+        });
+    </script>
+</body>
+</html>
