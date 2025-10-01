@@ -265,66 +265,78 @@
         let soldNumbers = [];
         let lastUpdateTime = null;
 
-        // Função para carregar dados da planilha
-        async function loadDataFromSheet() {
+        // Função para carregar dados da planilha usando JSONP (evita CORS)
+        function loadDataFromSheet() {
             const statusEl = document.getElementById('status');
             
             try {
                 statusEl.textContent = '🔄 Atualizando...';
                 statusEl.className = 'status loading';
 
-                // MÉTODO 1: Com API Key (mais confiável)
-                // const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}!A2:C?key=${API_KEY}`;
+                // Usar JSONP para evitar problemas de CORS
+                const callbackName = 'googleSheetCallback_' + Date.now();
                 
-                // MÉTODO 2: Sem API Key (planilha deve estar pública e "publicada na web")
-                // Vá em Arquivo > Compartilhar > Publicar na Web > Publicar
-                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
-                
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro ao carregar planilha: ${response.status}`);
-                }
-
-                const text = await response.text();
-                
-                // Parse do formato JSON do Google (remove o prefixo especial)
-                const jsonText = text.substring(47).slice(0, -2);
-                const data = JSON.parse(jsonText);
-                
-                // Extrair números vendidos e total
-                soldNumbers = [];
-                let maxNumber = 0;
-                
-                if (data.table && data.table.rows) {
-                    data.table.rows.forEach(row => {
-                        if (row.c && row.c[0]) { // Se tem número
-                            const numero = parseInt(row.c[0].v); // Coluna A (número)
-                            const nome = row.c[1]?.v || ''; // Coluna B (nome)
+                // Criar função callback global
+                window[callbackName] = function(data) {
+                    try {
+                        // Extrair números vendidos e total
+                        soldNumbers = [];
+                        let maxNumber = 0;
+                        
+                        if (data.table && data.table.rows) {
+                            data.table.rows.forEach(row => {
+                                if (row.c && row.c[0]) { // Se tem número
+                                    const numero = parseInt(row.c[0].v); // Coluna A (número)
+                                    const nome = row.c[1]?.v || ''; // Coluna B (nome)
+                                    
+                                    // Atualizar o número máximo para determinar o total
+                                    if (!isNaN(numero) && numero > maxNumber) {
+                                        maxNumber = numero;
+                                    }
+                                    
+                                    // Se tem nome, marca como vendido
+                                    if (nome && nome.trim() !== '') {
+                                        soldNumbers.push(numero);
+                                    }
+                                }
+                            });
                             
-                            // Atualizar o número máximo para determinar o total
-                            if (!isNaN(numero) && numero > maxNumber) {
-                                maxNumber = numero;
-                            }
-                            
-                            // Se tem nome, marca como vendido
-                            if (nome && nome.trim() !== '') {
-                                soldNumbers.push(numero);
-                            }
+                            // Atualizar o total de números baseado no maior número da planilha
+                            totalNumbers = maxNumber + 1;
                         }
-                    });
-                    
-                    // Atualizar o total de números baseado no maior número da planilha
-                    // Adiciona 1 porque se o maior número é 99, temos 100 números (0-99)
-                    totalNumbers = maxNumber + 1;
-                }
 
-                lastUpdateTime = new Date();
-                updateGrid();
+                        lastUpdateTime = new Date();
+                        updateGrid();
+                        
+                        console.log(`✅ Dados carregados: ${soldNumbers.length} vendidos de ${totalNumbers} números`);
+                        statusEl.textContent = `✅ Atualizado ${lastUpdateTime.toLocaleTimeString('pt-BR')}`;
+                        statusEl.className = 'status';
+                        
+                        // Limpar callback e script
+                        delete window[callbackName];
+                        document.getElementById('jsonp-script')?.remove();
+                        
+                    } catch (error) {
+                        console.error('Erro ao processar dados:', error);
+                        statusEl.textContent = `❌ Erro ao processar dados`;
+                        statusEl.className = 'status';
+                    }
+                };
                 
-                console.log(`✅ Dados carregados: ${soldNumbers.length} vendidos de ${totalNumbers} números`);
-                statusEl.textContent = `✅ Atualizado ${lastUpdateTime.toLocaleTimeString('pt-BR')}`;
-                statusEl.className = 'status';
+                // Criar elemento script para JSONP
+                const script = document.createElement('script');
+                script.id = 'jsonp-script';
+                script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${SHEET_NAME}`;
+                script.onerror = function() {
+                    console.error('Erro ao carregar planilha. Certifique-se que ela está publicada na web.');
+                    statusEl.textContent = `❌ Erro: Planilha não acessível`;
+                    statusEl.className = 'status';
+                    delete window[callbackName];
+                    // Tenta novamente em 30 segundos
+                    setTimeout(loadDataFromSheet, 30000);
+                };
+                
+                document.body.appendChild(script);
                 
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
