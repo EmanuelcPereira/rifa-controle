@@ -108,14 +108,14 @@
         }
 
         .legend-box {
-            width: 40px;
+            width: 50px;
             height: 40px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         .legend-box.available {
@@ -132,7 +132,7 @@
 
         .numbers-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
             gap: 10px;
             margin-top: 20px;
         }
@@ -146,7 +146,6 @@
             font-weight: bold;
             font-size: 1.1rem;
             transition: all 0.3s ease;
-            cursor: pointer;
             position: relative;
         }
 
@@ -154,11 +153,6 @@
             background: #e8f5e9;
             border: 2px solid #4caf50;
             color: #2e7d32;
-        }
-
-        .number-box.available:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
         }
 
         .number-box.sold {
@@ -189,12 +183,12 @@
             }
 
             .numbers-grid {
-                grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
                 gap: 8px;
             }
 
             .number-box {
-                font-size: 1rem;
+                font-size: 0.95rem;
             }
 
             .grid-container {
@@ -204,13 +198,134 @@
 
         @media (max-width: 480px) {
             .numbers-grid {
-                grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
                 gap: 6px;
             }
 
             .number-box {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
             }
+        }
+
+        /* Estilos do Pop-up de Informações */
+        .info-popup {
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 280px;
+            max-width: 400px;
+            display: none;
+            border: 3px solid #667eea;
+            animation: popupAppear 0.2s ease-out;
+        }
+
+        @keyframes popupAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .info-popup.show {
+            display: block;
+        }
+
+        .info-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .info-popup-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .info-popup-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .info-popup-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .info-popup-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-popup-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .info-popup-icon {
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .info-popup-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-popup-value {
+            color: #333;
+            font-size: 1.05rem;
+            word-break: break-word;
+        }
+
+        .info-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            display: none;
+        }
+
+        .info-popup-overlay.show {
+            display: block;
+        }
+
+        .number-box.sold {
+            cursor: pointer;
+        }
+
+        .number-box.sold:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
         }
     </style>
 </head>
@@ -240,15 +355,27 @@
         <div class="grid-container">
             <div class="legend">
                 <div class="legend-item">
-                    <div class="legend-box available">00</div>
+                    <div class="legend-box available">001</div>
                     <span>Disponível</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-box sold">00</div>
+                    <div class="legend-box sold">001</div>
                     <span>Vendido</span>
                 </div>
             </div>
             <div class="numbers-grid" id="numbersGrid"></div>
+        </div>
+    </div>
+
+    <!-- Pop-up de Informações -->
+    <div class="info-popup-overlay" id="popupOverlay"></div>
+    <div class="info-popup" id="infoPopup">
+        <div class="info-popup-header">
+            <div class="info-popup-title">📋 Informações do Número</div>
+            <button class="info-popup-close" id="closePopup">×</button>
+        </div>
+        <div class="info-popup-content" id="popupContent">
+            <!-- Conteúdo dinâmico será inserido aqui -->
         </div>
     </div>
 
@@ -261,8 +388,9 @@
         // Se você não quiser usar API Key, a planilha precisa estar pública
         // Você pode usar o método alternativo sem API Key (veja função loadDataFromSheet)
         
-        let totalNumbers = 200; // Total de números da rifa (será ajustado automaticamente)
+        let totalNumbers = 200; // Total de números da rifa (de 1 a 200, ajustado automaticamente)
         let soldNumbers = [];
+        let numbersData = {}; // Armazena informações completas: { numero: { nome: '', telefone: '' } }
         let lastUpdateTime = null;
 
         // Função para carregar dados da planilha usando JSONP (evita CORS)
@@ -281,28 +409,39 @@
                     try {
                         // Extrair números vendidos e total
                         soldNumbers = [];
+                        numbersData = {};
                         let maxNumber = 0;
                         
                         if (data.table && data.table.rows) {
                             data.table.rows.forEach(row => {
                                 if (row.c && row.c[0]) { // Se tem número
                                     const numero = parseInt(row.c[0].v); // Coluna A (número)
-                                    const nome = row.c[1]?.v || ''; // Coluna B (nome)
+                                    const nomeRaw = row.c[1]?.v; // Coluna B (nome)
+                                    const telefoneRaw = row.c[2]?.v; // Coluna C (telefone)
+                                    
+                                    // Converter para string e limpar
+                                    const nome = nomeRaw ? String(nomeRaw).trim() : '';
+                                    const telefone = telefoneRaw ? String(telefoneRaw).trim() : '';
                                     
                                     // Atualizar o número máximo para determinar o total
                                     if (!isNaN(numero) && numero > maxNumber) {
                                         maxNumber = numero;
                                     }
                                     
-                                    // Se tem nome, marca como vendido
-                                    if (nome && nome.trim() !== '') {
+                                    // Se tem nome, marca como vendido e armazena informações
+                                    if (nome !== '') {
                                         soldNumbers.push(numero);
+                                        numbersData[numero] = {
+                                            nome: nome,
+                                            telefone: telefone
+                                        };
                                     }
                                 }
                             });
                             
                             // Atualizar o total de números baseado no maior número da planilha
-                            totalNumbers = maxNumber + 1;
+                            // Como os números começam do 1, o total é igual ao maior número
+                            totalNumbers = maxNumber;
                         }
 
                         lastUpdateTime = new Date();
@@ -352,19 +491,90 @@
             const grid = document.getElementById('numbersGrid');
             grid.innerHTML = '';
 
-            for (let i = 0; i < totalNumbers; i++) {
+            // Começar do 1 até totalNumbers (inclusive)
+            for (let i = 1; i <= totalNumbers; i++) {
                 const numberBox = document.createElement('div');
                 const number = i;
                 const isSold = soldNumbers.includes(number);
                 
                 numberBox.className = `number-box ${isSold ? 'sold' : 'available'}`;
-                numberBox.textContent = String(number).padStart(2, '0');
+                numberBox.textContent = String(number).padStart(3, '0');
+                
+                // Se está vendido, adicionar evento de clique para mostrar pop-up
+                if (isSold) {
+                    numberBox.addEventListener('click', () => showPopup(number));
+                    numberBox.setAttribute('title', 'Clique para ver informações');
+                }
                 
                 grid.appendChild(numberBox);
             }
 
             updateStats();
         }
+
+        // Função para mostrar o pop-up com informações
+        function showPopup(numero) {
+            const data = numbersData[numero];
+            if (!data) return;
+
+            const popup = document.getElementById('infoPopup');
+            const overlay = document.getElementById('popupOverlay');
+            const content = document.getElementById('popupContent');
+
+            // Criar conteúdo do pop-up
+            content.innerHTML = `
+                <div class="info-popup-item">
+                    <div class="info-popup-icon">🎟️</div>
+                    <div>
+                        <div class="info-popup-label">Número</div>
+                        <div class="info-popup-value">${String(numero).padStart(3, '0')}</div>
+                    </div>
+                </div>
+                <div class="info-popup-item">
+                    <div class="info-popup-icon">👤</div>
+                    <div>
+                        <div class="info-popup-label">Nome</div>
+                        <div class="info-popup-value">${data.nome || 'Não informado'}</div>
+                    </div>
+                </div>
+                <div class="info-popup-item">
+                    <div class="info-popup-icon">📱</div>
+                    <div>
+                        <div class="info-popup-label">Telefone</div>
+                        <div class="info-popup-value">${data.telefone || '--'}</div>
+                    </div>
+                </div>
+            `;
+
+            // Posicionar pop-up no centro da tela
+            popup.style.left = '50%';
+            popup.style.top = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+
+            // Mostrar pop-up e overlay
+            popup.classList.add('show');
+            overlay.classList.add('show');
+        }
+
+        // Função para fechar o pop-up
+        function closePopup() {
+            const popup = document.getElementById('infoPopup');
+            const overlay = document.getElementById('popupOverlay');
+            
+            popup.classList.remove('show');
+            overlay.classList.remove('show');
+        }
+
+        // Event listeners para fechar o pop-up
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('closePopup').addEventListener('click', closePopup);
+            document.getElementById('popupOverlay').addEventListener('click', closePopup);
+            
+            // Fechar com tecla ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePopup();
+            });
+        });
 
         function updateStats() {
             const sold = soldNumbers.length;
